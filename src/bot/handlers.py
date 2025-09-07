@@ -8,8 +8,15 @@ from aiogram.types import Message
 from ..database.database import get_database
 from ..database.repositories import get_repositories
 from ..services.report_generator import ReportGenerator
+from ..config.settings import settings
 
 router = Router()
+
+
+def get_reminder_times_text() -> str:
+    """Get formatted reminder times text."""
+    times = ", ".join(settings.reminder_times)
+    return f"в {times} ежедневно (МСК)"
 
 
 @router.message(CommandStart())
@@ -34,7 +41,7 @@ async def start_command(message: Message) -> None:
                 "• Отправьте мне показания в формате: 120/80\n"
                 "• /report - Получить измерения в виде CSV\n"
                 "• /help - Показать справку\n\n"
-                "Я буду отправлять напоминания в 7:00, 13:00 и 20:00 ежедневно."
+                f"Я буду отправлять напоминания {get_reminder_times_text()}."
             )
         else:
             await message.answer("Регистрация не удалась. Пожалуйста, попробуйте снова.")
@@ -52,7 +59,7 @@ async def help_command(message: Message) -> None:
         "• /report - Скачать CSV со всеми измерениями\n\n"
         "ℹ️ Другое:\n"
         "• /help - Показать это сообщение\n\n"
-        "💡 Я буду напоминать измерять давление в 7:00, 13:00 и 20:00 ежедневно."
+        f"💡 Я буду напоминать измерять давление {get_reminder_times_text()}."
     )
 
 
