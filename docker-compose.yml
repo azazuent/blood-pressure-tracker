@@ -1,24 +1,45 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: blood-pressure-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-blood_pressure}
+      - POSTGRES_USER=${POSTGRES_USER:-bp_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-bp_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bp_user} -d ${POSTGRES_DB:-blood_pressure}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   blood-pressure-bot:
     build: .
     container_name: blood-pressure-tracker
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-      - DATABASE_URL=sqlite:///app/data/blood_pressure.db
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-bp_user}:${POSTGRES_PASSWORD:-bp_password}@postgres:5432/${POSTGRES_DB:-blood_pressure}
       - REMINDER_TIMES=${REMINDER_TIMES:-07:00,13:00,20:00}
       - DEBUG=${DEBUG:-false}
     volumes:
-      - bot_data:/app/data
       - bot_logs:/app/logs
     networks:
       - bot-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('/app/data/blood_pressure.db').close()"]
+      test: ["CMD", "python", "-c", "import psycopg2; psycopg2.connect('postgresql://${POSTGRES_USER:-bp_user}:${POSTGRES_PASSWORD:-bp_password}@postgres:5432/${POSTGRES_DB:-blood_pressure}').close()"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     logging:
       driver: "json-file"
       options:
@@ -26,8 +47,8 @@ services:
         max-file: "3"
 
 volumes:
-  bot_data:
-    name: blood_pressure_data
+  postgres_data:
+    name: blood_pressure_postgres_data
   bot_logs:
     name: blood_pressure_logs
 
