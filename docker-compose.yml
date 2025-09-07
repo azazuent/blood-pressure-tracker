@@ -1,0 +1,36 @@
+services:
+  blood-pressure-bot:
+    build: .
+    container_name: blood-pressure-tracker
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - DATABASE_URL=sqlite:///app/data/blood_pressure.db
+      - REMINDER_TIMES=${REMINDER_TIMES:-07:00,13:00,20:00}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      - bot_data:/app/data
+      - bot_logs:/app/logs
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('/app/data/blood_pressure.db').close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bot_data:
+    name: blood_pressure_data
+  bot_logs:
+    name: blood_pressure_logs
+
+networks:
+  bot-network:
+    name: blood_pressure_network
