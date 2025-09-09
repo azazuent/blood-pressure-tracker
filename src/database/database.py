@@ -36,14 +36,14 @@ db_instance: Database = None
 def init_database(database_url: str) -> Database:
     """Initialize global database instance."""
     global db_instance
-    
+
     # Ensure directory exists for SQLite databases (fallback support)
     if database_url.startswith('sqlite:///'):
         db_path = database_url.replace('sqlite:///', '', 1)
         db_dir = os.path.dirname(db_path)
         if db_dir:
             os.makedirs(db_dir, exist_ok=True)
-    
+
     db_instance = Database(database_url)
     db_instance.create_tables()
     return db_instance

@@ -5,10 +5,10 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
+from ..config.settings import settings
 from ..database.database import get_database
 from ..database.repositories import get_repositories
 from ..services.report_generator import ReportGenerator
-from ..config.settings import settings
 
 router = Router()
 
@@ -95,6 +95,55 @@ async def report_command(message: Message) -> None:
         await message.answer_document(
             document=file,
             caption=f"📊 Ваш отчет по артериальному давлению ({len(measurements)} измерений)"
+        )
+
+
+@router.message(F.text.regexp(r'^/report_(\d+)$'))
+async def report_user_command(message: Message) -> None:
+    """Handle /report_<user_id> command - generate CSV report for another user."""
+    # Check if requester is authorized
+    if message.from_user.id not in settings.authorized_requesters:
+        await message.answer("❌ У вас нет прав для запроса отчетов других пользователей.")
+        return
+
+    # Extract target user ID from command
+    match = re.match(r'^/report_(\d+)$', message.text)
+    if not match:
+        await message.answer("❌ Неверный формат команды. Используйте /report_<telegram_id>")
+        return
+
+    target_telegram_id = int(match.group(1))
+
+    db = get_database()
+
+    with db.get_session() as session:
+        user_repo, measurement_repo = get_repositories(session)
+
+        # Find target user by telegram ID
+        target_user = user_repo.get_by_telegram_id(target_telegram_id)
+        if not target_user:
+            await message.answer(f"❌ Пользователь с ID {target_telegram_id} не найден.")
+            return
+
+        measurements = measurement_repo.get_user_measurements(target_user.id)
+
+        if not measurements:
+            await message.answer(f"❌ У пользователя {target_telegram_id} нет измерений.")
+            return
+
+        report_generator = ReportGenerator()
+        csv_data = report_generator.generate_csv_report(measurements)
+
+        # Create file name with user ID and current date
+        filename = f"bp_report_{target_telegram_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+
+        # Send CSV as document
+        from aiogram.types import BufferedInputFile
+        file = BufferedInputFile(csv_data.encode(), filename)
+
+        await message.answer_document(
+            document=file,
+            caption=f"📊 Отчет пользователя {target_telegram_id} ({len(measurements)} измерений)"
         )
 
 

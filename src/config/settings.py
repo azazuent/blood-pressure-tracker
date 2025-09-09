@@ -19,6 +19,9 @@ class Settings:
     # Reminder Times (24-hour format)
     reminder_times: list[str]
 
+    # Authorized requesters for cross-user reports
+    authorized_requesters: list[int]
+
     # Application Settings
     debug: bool = False
 
@@ -36,11 +39,21 @@ class Settings:
 
         debug = os.getenv("DEBUG", "false").lower() == "true"
 
+        # Parse authorized requesters (comma-separated telegram IDs)
+        authorized_requesters_str = os.getenv("AUTHORIZED_REQUESTERS", "")
+        authorized_requesters = []
+        if authorized_requesters_str.strip():
+            try:
+                authorized_requesters = [int(telegram_id.strip()) for telegram_id in authorized_requesters_str.split(",") if telegram_id.strip()]
+            except ValueError as e:
+                raise ValueError("AUTHORIZED_REQUESTERS must contain comma-separated telegram IDs") from e
+
         return cls(
             telegram_token=telegram_token,
             database_url=database_url,
             reminder_times=reminder_times,
-            debug=debug
+            debug=debug,
+            authorized_requesters=authorized_requesters
         )
 
 
