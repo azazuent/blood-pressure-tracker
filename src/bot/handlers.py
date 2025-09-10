@@ -204,8 +204,8 @@ async def handle_measurement(message: Message) -> None:
 
         await message.answer(
             f"✅ Записано: {measurement.formatted_reading} mmHg\n"
-            f"📅 Время: {measurement.measured_at.strftime('%Y-%m-%d %H:%M')}\n"
-            f"📊 Категория: {category}\n\n"
+            # f"📅 Время: {measurement.measured_at.strftime('%Y-%m-%d %H:%M')}\n"
+            # f"📊 Категория: {category}\n\n"
             f"Используйте /report для загрузки данных."
         )
 
