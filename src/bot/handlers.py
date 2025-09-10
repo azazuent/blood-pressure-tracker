@@ -203,10 +203,10 @@ async def handle_measurement(message: Message) -> None:
         category = get_bp_category(systolic, diastolic)
 
         await message.answer(
-            f"✅ Записано: {measurement.formatted_reading} mmHg\n"
+            f"✅ Записано: {measurement.formatted_reading} mmHg" # \n"
             # f"📅 Время: {measurement.measured_at.strftime('%Y-%m-%d %H:%M')}\n"
             # f"📊 Категория: {category}\n\n"
-            f"Используйте /report для загрузки данных."
+            # f"Используйте /report для загрузки данных."
         )
 
 
