@@ -38,8 +38,8 @@ def init_database(database_url: str) -> Database:
     global db_instance
 
     # Ensure directory exists for SQLite databases (fallback support)
-    if database_url.startswith('sqlite:///'):
-        db_path = database_url.replace('sqlite:///', '', 1)
+    if database_url.startswith("sqlite:///"):
+        db_path = database_url.replace("sqlite:///", "", 1)
         db_dir = os.path.dirname(db_path)
         if db_dir:
             os.makedirs(db_dir, exist_ok=True)

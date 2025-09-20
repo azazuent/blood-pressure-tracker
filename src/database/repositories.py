@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,8 +13,9 @@ class UserRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def create_user(self, telegram_id: int, username: str | None = None,
-                   first_name: str | None = None) -> User | None:
+    def create_user(
+        self, telegram_id: int, username: str | None = None, first_name: str | None = None
+    ) -> User | None:
         """Create a new user or return existing one."""
         existing_user = self.get_by_telegram_id(telegram_id)
         if existing_user:
@@ -23,7 +25,7 @@ class UserRepository:
             telegram_id=telegram_id,
             username=username,
             first_name=first_name,
-            registered_at=datetime.utcnow()
+            registered_at=datetime.utcnow(),
         )
 
         try:
@@ -50,14 +52,15 @@ class MeasurementRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def create_measurement(self, user_id: int, systolic: int, diastolic: int,
-                          measured_at: datetime | None = None) -> Measurement:
+    def create_measurement(
+        self, user_id: int, systolic: int, diastolic: int, measured_at: datetime | None = None
+    ) -> Measurement:
         """Create a new blood pressure measurement."""
         measurement = Measurement(
             user_id=user_id,
             systolic=systolic,
             diastolic=diastolic,
-            measured_at=measured_at or datetime.utcnow()
+            measured_at=measured_at or datetime.utcnow(),
         )
 
         self.session.add(measurement)
@@ -67,18 +70,32 @@ class MeasurementRepository:
 
     def get_user_measurements(self, user_id: int) -> list[Measurement]:
         """Get all measurements for a specific user."""
-        return (self.session.query(Measurement)
-                .filter(Measurement.user_id == user_id)
-                .order_by(Measurement.measured_at.desc())
-                .all())
+        return (
+            self.session.query(Measurement)
+            .filter(Measurement.user_id == user_id)
+            .order_by(Measurement.measured_at.desc())
+            .all()
+        )
 
     def get_recent_measurements(self, user_id: int, limit: int = 10) -> list[Measurement]:
         """Get recent measurements for a user."""
-        return (self.session.query(Measurement)
-                .filter(Measurement.user_id == user_id)
-                .order_by(Measurement.measured_at.desc())
-                .limit(limit)
-                .all())
+        return (
+            self.session.query(Measurement)
+            .filter(Measurement.user_id == user_id)
+            .order_by(Measurement.measured_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def get_daily_measurement_count(self, user_id: int, target_date: date) -> int:
+        """Get count of measurements for a specific user on a given date."""
+        return (
+            self.session.query(Measurement)
+            .filter(
+                Measurement.user_id == user_id, func.date(Measurement.measured_at) == target_date
+            )
+            .count()
+        )
 
 
 def get_repositories(session: Session) -> tuple[UserRepository, MeasurementRepository]:

@@ -10,6 +10,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     """User model for storing registered users."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -23,6 +24,7 @@ class User(Base):
 
 class Measurement(Base):
     """Blood pressure measurement model."""
+
     __tablename__ = "measurements"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

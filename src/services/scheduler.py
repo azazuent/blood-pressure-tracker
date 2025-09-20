@@ -42,7 +42,7 @@ class ReminderScheduler:
     async def _schedule_daily_reminder(self, reminder_time: str) -> None:
         """Schedule daily reminders for a specific time."""
         try:
-            hour, minute = map(int, reminder_time.split(':'))
+            hour, minute = map(int, reminder_time.split(":"))
             target_time = time(hour, minute)
         except ValueError:
             logger.error(f"Invalid reminder time format: {reminder_time}")
@@ -55,19 +55,13 @@ class ReminderScheduler:
             now_msk = datetime.now(self.msk_tz)
 
             # Create target datetime in MSK
-            target_datetime_msk = datetime.combine(
-                now_msk.date(),
-                target_time,
-                tzinfo=self.msk_tz
-            )
+            target_datetime_msk = datetime.combine(now_msk.date(), target_time, tzinfo=self.msk_tz)
 
             # If target time has passed today, schedule for tomorrow
             if target_datetime_msk <= now_msk:
                 tomorrow_msk = now_msk.date() + timedelta(days=1)
                 target_datetime_msk = datetime.combine(
-                    tomorrow_msk,
-                    target_time,
-                    tzinfo=self.msk_tz
+                    tomorrow_msk, target_time, tzinfo=self.msk_tz
                 )
 
             # Calculate sleep duration
@@ -98,7 +92,7 @@ class ReminderScheduler:
                 users = user_repo.get_all_users()
 
                 reminder_message = (
-                    "🩺 Время измерить артериальное давление!" # \n\n"
+                    "🩺 Время измерить артериальное давление!"  # \n\n"
                     # "Пожалуйста, измерьте артериальное давление и отправьте мне результат.\n"
                     # "Формат: 120/80"
                 )
@@ -108,10 +102,7 @@ class ReminderScheduler:
 
                 for user in users:
                     try:
-                        await self.bot.send_message(
-                            chat_id=user.telegram_id,
-                            text=reminder_message
-                        )
+                        await self.bot.send_message(chat_id=user.telegram_id, text=reminder_message)
                         sent_count += 1
 
                         # Small delay to avoid hitting rate limits
@@ -131,7 +122,7 @@ class ReminderScheduler:
         try:
             await self.bot.send_message(
                 chat_id=telegram_id,
-                text="🧪 Тестовое напоминание: Время измерить артериальное давление!"
+                text="🧪 Тестовое напоминание: Время измерить артериальное давление!",
             )
             return True
         except Exception as e:

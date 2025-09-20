@@ -1,3 +1,5 @@
+from datetime import date
+
 from src.bot.handlers import get_bp_category, parse_blood_pressure
 
 
@@ -58,3 +60,28 @@ class TestBloodPressureCategories:
         """Test hypertensive crisis category."""
         assert get_bp_category(190, 125) == "Гипертонический криз - обратитесь к врачу"
         assert get_bp_category(200, 130) == "Гипертонический криз - обратитесь к врачу"
+
+
+class TestDailyMeasurementCount:
+    """Test daily measurement counting functionality."""
+
+    def test_daily_count_basic(self):
+        """Test that the daily measurement count method is accessible."""
+        from unittest.mock import MagicMock
+
+        from src.database.repositories import MeasurementRepository
+
+        # Create a mock session
+        mock_session = MagicMock()
+        mock_query = MagicMock()
+        mock_session.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.count.return_value = 2
+
+        # Test the repository method
+        repo = MeasurementRepository(mock_session)
+        count = repo.get_daily_measurement_count(1, date.today())
+
+        # Verify it returns a count
+        assert isinstance(count, int)
+        assert count == 2

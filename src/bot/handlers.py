@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import date, datetime
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
@@ -30,7 +30,7 @@ async def start_command(message: Message) -> None:
         user = user_repo.create_user(
             telegram_id=message.from_user.id,
             username=message.from_user.username,
-            first_name=message.from_user.first_name
+            first_name=message.from_user.first_name,
         )
 
         if user:
@@ -90,15 +90,16 @@ async def report_command(message: Message) -> None:
 
         # Send CSV as document
         from aiogram.types import BufferedInputFile
+
         file = BufferedInputFile(csv_data.encode(), filename)
 
         await message.answer_document(
             document=file,
-            caption=f"📊 Ваш отчет по артериальному давлению ({len(measurements)} измерений)"
+            caption=f"📊 Ваш отчет по артериальному давлению ({len(measurements)} измерений)",
         )
 
 
-@router.message(F.text.regexp(r'^/report_(\d+)$'))
+@router.message(F.text.regexp(r"^/report_(\d+)$"))
 async def report_user_command(message: Message) -> None:
     """Handle /report_<user_id> command - generate CSV report for another user."""
     # Check if requester is authorized
@@ -107,7 +108,7 @@ async def report_user_command(message: Message) -> None:
         return
 
     # Extract target user ID from command
-    match = re.match(r'^/report_(\d+)$', message.text)
+    match = re.match(r"^/report_(\d+)$", message.text)
     if not match:
         await message.answer("❌ Неверный формат команды. Используйте /report_<telegram_id>")
         return
@@ -139,19 +140,19 @@ async def report_user_command(message: Message) -> None:
 
         # Send CSV as document
         from aiogram.types import BufferedInputFile
+
         file = BufferedInputFile(csv_data.encode(), filename)
 
         await message.answer_document(
             document=file,
-            caption=f"📊 Отчет пользователя {target_telegram_id} ({len(measurements)} измерений)"
+            caption=f"📊 Отчет пользователя {target_telegram_id} ({len(measurements)} измерений)",
         )
-
 
 
 def parse_blood_pressure(text: str) -> tuple[int, int] | None:
     """Parse blood pressure reading from text."""
     # Match patterns like "120/80", "120 / 80", "120-80"
-    pattern = r'(\d{2,3})\s*[/\-]\s*(\d{2,3})'
+    pattern = r"(\d{2,3})\s*[/\-]\s*(\d{2,3})"
     match = re.search(pattern, text)
 
     if match:
@@ -194,20 +195,23 @@ async def handle_measurement(message: Message) -> None:
 
         # Save measurement
         measurement = measurement_repo.create_measurement(
-            user_id=user.id,
-            systolic=systolic,
-            diastolic=diastolic
+            user_id=user.id, systolic=systolic, diastolic=diastolic
         )
 
-        # Determine blood pressure category
-        category = get_bp_category(systolic, diastolic)
+        # Check for daily measurement motivation
+        today = date.today()
+        daily_count = measurement_repo.get_daily_measurement_count(user.id, today)
 
         await message.answer(
-            f"✅ Записано: {measurement.formatted_reading} mmHg" # \n"
+            f"✅ Записано: {measurement.formatted_reading} mmHg"  # \n"
             # f"📅 Время: {measurement.measured_at.strftime('%Y-%m-%d %H:%M')}\n"
             # f"📊 Категория: {category}\n\n"
             # f"Используйте /report для загрузки данных."
         )
+
+        # Send motivational message if user measured 3 times today
+        if daily_count == 3:
+            await message.answer("🎉 Спасибо, что измерили давление 3 раза за день!")
 
 
 def get_bp_category(systolic: int, diastolic: int) -> str:

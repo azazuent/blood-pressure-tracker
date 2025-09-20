@@ -44,16 +44,22 @@ class Settings:
         authorized_requesters = []
         if authorized_requesters_str.strip():
             try:
-                authorized_requesters = [int(telegram_id.strip()) for telegram_id in authorized_requesters_str.split(",") if telegram_id.strip()]
+                authorized_requesters = [
+                    int(telegram_id.strip())
+                    for telegram_id in authorized_requesters_str.split(",")
+                    if telegram_id.strip()
+                ]
             except ValueError as e:
-                raise ValueError("AUTHORIZED_REQUESTERS must contain comma-separated telegram IDs") from e
+                raise ValueError(
+                    "AUTHORIZED_REQUESTERS must contain comma-separated telegram IDs"
+                ) from e
 
         return cls(
             telegram_token=telegram_token,
             database_url=database_url,
             reminder_times=reminder_times,
             debug=debug,
-            authorized_requesters=authorized_requesters
+            authorized_requesters=authorized_requesters,
         )
 
 
